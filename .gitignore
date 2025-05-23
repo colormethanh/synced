@@ -38,15 +38,45 @@ out/
 build/
 dist/
 .npm/
-npm-debug.log*
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versionsnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
 
 # Environment files (secrets and config)
 .env
 .env.local
 .env.*.local
 
+# vercel
+.vercel
+
+# testing
+/coverage
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
 # Logs
 logs/
 *.log
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
