@@ -30,3 +30,12 @@ You'll need to figure out how to activate a venv based on your OS
 `npm install`
 3. Start the frontend server
 `npm run dev`
+
+### Set up env Variables
+The env variable values can be found in the shared notion. 
+
+The frontend and backend should have separate .env files. I think that's the easiest and less confusing way to setting it up. 
+
+**Note On env. Variables with next.js** <br>
+Next.js env variables must be appended with <em>NEXT_PUBLIC_</em> followed by the name of your env name <br>
+ex. NEXT_PUBLIC_SUPER_SECRET_ID=supersecretidnottobesharedwithotherpeeople
