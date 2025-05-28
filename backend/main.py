@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 import os
 import httpx
 from dotenv import load_dotenv
@@ -12,11 +14,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI()
-
-
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=os.getenv("SESSION_SECRET_KEY"),
+    https_only=False      # ✅ allows cookies over HTTP (needed for localhost)), TODO: delete this later
+)
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+print(GOOGLE_CLIENT_ID)
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 REDIRECT_URI = "http://localhost:8000/auth/google/callback"
+print(GOOGLE_CLIENT_SECRET)
 
 
 # Allow React frontend to access FastAPI
@@ -36,7 +43,11 @@ class TokenRequest(BaseModel):
 def read_root():
     return {"message": "Hello from FastAPI!"}
 
-
+@app.get("/auth/status")
+def auth_status(request: Request):
+    print("Session contents:", request.session)
+    token = request.session.get("access_token")
+    return {"authenticated": bool(token)}
 
 @app.get("/auth/google")
 async def google_auth_url():
@@ -51,7 +62,6 @@ async def google_auth_url():
             f"prompt=consent"
         )
     }
-
 
 @app.get("/auth/google/callback")
 async def google_callback(request: Request):
@@ -70,7 +80,15 @@ async def google_callback(request: Request):
         )
     token_json = token_resp.json()
     access_token = token_json.get("access_token")
-    return {"access_token": access_token}
+    refresh_token = token_json.get("refresh_token")
+
+    # TODO: In the future we will def. be saving these to the db or alongside a userid
+    print(f"Setting session data: {request.session}")
+    request.session["access_token"] = access_token
+    request.session["refresh_token"] = refresh_token
+    print(f"Just set session data: {request.session}")
+
+    return RedirectResponse(url="http://localhost:3000/sync")
 
 @app.get("/calendar")
 def get_calendar_events():

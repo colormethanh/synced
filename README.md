@@ -14,13 +14,14 @@ Backend:
 ## Quick Start
 
 ### Starting the backend
-1. Start a virtual env. <br>
+1. cd in backend 
+2. Start a virtual env. <br>
 `python -m venv myvenv` <br>
 You'll need to figure out how to activate a venv based on your OS
-2. CD into the backend with... <br> `cd backend` 
-3. Install required packages in the requirement.txt file by running <br>
+3. CD into the backend with... <br> `cd backend` 
+4. Install required packages in the requirement.txt file by running <br>
 `pip install -r requirements.txt`
-4. Start the backend server by running <br>
+5. Start the backend server by running <br>
 `uvicorn main:app --reload --port 8000`
 
 ### Starting the frontend
