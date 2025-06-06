@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -14,6 +14,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI()
+
+
+# Allow React frontend to access FastAPI
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://192.168.2.133:3000"],  # frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.add_middleware(
     SessionMiddleware, 
     secret_key=os.getenv("SESSION_SECRET_KEY"),
@@ -26,14 +39,6 @@ REDIRECT_URI = "http://localhost:8000/auth/google/callback"
 print(GOOGLE_CLIENT_SECRET)
 
 
-# Allow React frontend to access FastAPI
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # frontend origin
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 class TokenRequest(BaseModel):
     code: str
@@ -91,7 +96,34 @@ async def google_callback(request: Request):
     return RedirectResponse(url="http://localhost:3000/sync")
 
 @app.get("/calendar")
-def get_calendar_events():
+async def get_calendar_events(request: Request):
     print("Retrieving calendar")
-    pass
+    access_token = request.session.get("access_token")
+
+    if not access_token:
+        return JSONResponse(status_code=401, content={"error": "Not authenticated"})
+    
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    params = {
+        "maxResults": 10,
+        "orderBy": "startTime",
+        "singleEvents": True,
+        "timeMin": "2024-06-01T00:00:00Z"  # optional: only fetch upcoming events
+    }
+
+    url = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers, params=params)
+
+    if response.status_code != 200:
+        return JSONResponse(status_code=response.status_code, content=response.json())
+
+    return response.json()
+    
+
+
 
